@@ -11,9 +11,11 @@ def read_file(fname):
 version = '1.0.5'
 tar_url = 'https://github.com/reportportal/agent-python-pytest/tarball/1.0.3'
 
+dependencies = [
+    'git+https://github.com/reportportal/client-Python.git@3.2.2',
+]
 
 requirements = [
-    'reportportal-client>=3.1.0',
     'pytest>=3.0.7',
     'six>=1.10.0',
     'dill>=0.2.7.1',
@@ -32,6 +34,7 @@ setup(
     download_url=tar_url,
     packages=['pytest_reportportal'],
     install_requires=requirements,
+    dependency_links=dependencies,
     license='Apache 2.0',
     keywords=['testing', 'reporting', 'reportportal', 'pytest'],
     classifiers=[
