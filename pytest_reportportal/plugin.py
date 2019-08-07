@@ -5,6 +5,9 @@ import logging
 import dill as pickle
 import pytest
 import time
+
+import requests
+
 from pytest_reportportal import LAUNCH_WAIT_TIMEOUT
 from .service import PyTestServiceClass
 from .listener import RPReportListener
@@ -27,6 +30,23 @@ def is_master(config):
     return not hasattr(config, 'slaveinput')
 
 
+def connection_available(session):
+    """
+    True if `rp_endpoint` returns 200 code
+    """
+    result = True
+    server = session.config.getini('rp_endpoint')
+    try:
+        res = requests.get(server)
+        if res.status_code != 200:
+            result = False
+    except requests.exceptions.RequestException:
+        result = False
+    if not result:
+        log.warn("Unable to connect to server {}".format(server))
+    return result
+
+
 @pytest.mark.optionalhook
 def pytest_configure_node(node):
     if node.config._reportportal_configured is False:
@@ -44,6 +64,11 @@ def pytest_sessionstart(session):
         return
 
     if not session.config.option.rp_enabled:
+        return
+    elif (
+        not connection_available(session)
+        and bool(session.config.getini('rp_ignore_errors'))
+    ):
         return
 
     if is_master(session.config):
@@ -112,6 +137,11 @@ def pytest_sessionfinish(session):
         return
 
     if not session.config.option.rp_enabled:
+        return
+    elif (
+        not connection_available(session)
+        and bool(session.config.getini('rp_ignore_errors'))
+    ):
         return
 
     # FixMe: currently method of RP api takes the string parameter
